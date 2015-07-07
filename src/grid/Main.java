@@ -5,6 +5,9 @@
  */
 package grid;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 
 /**
@@ -24,7 +27,7 @@ public class Main {
 
     }
 
-    void grid() {
+    void grid() throws IOException {
         Scanner scan = new Scanner(System.in); //file
 
         // 件数
@@ -74,8 +77,7 @@ public class Main {
         int s_cnt = 0;
         int ve_cnt = 0;
         int vi_cnt = 0;
-                
-        
+
         for (Iris i : irises) {
             if (i.getCategory().equals(CATEGORY.setose)) {
                 int gh2r = (int) Math.round(i.getGaku_hei() * 2);
@@ -86,7 +88,7 @@ public class Main {
                 // 指定のグリッドへ個数を追加
                 g_setosa[gh2r][gw2r]++;
                 h_setosa[hh2r][hw2r]++;
-                
+
                 s_cnt++;
 
             } else if (i.getCategory().equals(CATEGORY.versicolor)) {
@@ -99,10 +101,10 @@ public class Main {
                 // 指定のグリッドへ個数を追加
                 g_versicolor[gh2r][gw2r]++;
                 h_versicolor[hh2r][hw2r]++;
-                
+
                 ve_cnt++;
             } else {
-              // virginica
+                // virginica
 
                 int gh2r = (int) Math.round(i.getGaku_hei() * 2);
                 int gw2r = (int) Math.round(i.getGaku_wid() * 2);
@@ -112,13 +114,26 @@ public class Main {
                 // 指定のグリッドへ個数を追加
                 g_virginica[gh2r][gw2r]++;
                 h_virginica[hh2r][hw2r]++;
-                
+
                 vi_cnt++;
             }
         }
-        
+
         // データの出力
         // どういう形式で出力すべきか…
+        // とりあえず各データをカンマ区切りで各行出力
+        String setoGaku = "setosa_Gaku.txt";
+        String setoHana = "setosa_Hana.txt";
+        String verGaku = "versicolor_Gaku.txt";
+        String verHana = "versicolor_Hana.txt";
+        String virGaku = "virginica_Hana.txt";
+        String virHana = "virginica_Hana.txt";
+
+        FileWriter fw = new FileWriter(new File(setoGaku));
+
+        // 現状のファイル構造は、空白がファイルに出力されてしまう
+        for (int[] l : g_setosa) {
+        }
 
     }
 }
