@@ -25,6 +25,7 @@ public class IrisGridGrouping {
     int gwmax, ghmax, hhmax, hwmax;
     int[][] g_setosa, h_setosa, g_virginica, h_virginica, g_versicolor, h_versicolor;
     int s_cnt, vi_cnt, ve_cnt;
+    Scanner scan;
     
     
 
@@ -44,7 +45,7 @@ public class IrisGridGrouping {
     // 初期化
     // 確率表の作成
     void buildGrid() throws IOException {
-        Scanner scan = new Scanner(System.in); //file
+        scan = new Scanner(System.in); //file
         
 
         // 件数
@@ -161,6 +162,15 @@ public class IrisGridGrouping {
 
     void grouping() {
 
+    }
+    
+    // レスポンスシステムにする
+    void controll(){
+        System.out.println("-----操作を選んでください-----");
+        System.out.println("i {データファイルパス} = 確率表を構築");
+        System.out.println("g [データファイルパス] = データを分類 確率表は更新されない");
+        System.out.println("u [データファイルパス] = データを分類 確率表を更新");
+        System.out.println("v = 分類の種類を一覧表示");
     }
 
     int[][] incrementGridGaku(Iris i, int[][] grid) {
