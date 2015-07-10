@@ -29,6 +29,9 @@ public class IrisGridGrouping {
     double[][] prob_sep_seto, prob_pet_seto, prob_sep_vir, prob_pet_vir, prob_sep_ver, prob_pet_ver;
     int s_cnt, vi_cnt, ve_cnt;
     Scanner scan;
+   
+    final String irisdata = "C:\\Users\\g15002se\\Documents\\NetBeansProjects\\softcomputing\\src\\grid\\iris.txt";
+    final String testdata = "C:\\Users\\g15002se\\Documents\\NetBeansProjects\\softcomputing\\src\\grid\\testdata";
 
     public static void main(String[] args) throws IOException {
         IrisGridGrouping igg = new IrisGridGrouping();
@@ -39,7 +42,7 @@ public class IrisGridGrouping {
     // 確率表の作成
     void buildGrid() throws IOException {
         //scan = new Scanner(System.in); //file
-        scan = new Scanner(new File("C:\\Users\\省吾\\Documents\\NetBeansProjects\\softcomputing\\src\\grid\\iris.txt"));
+        scan = new Scanner(new File(irisdata));
 
         for (int i = 0; i < 5; i++) {
             System.out.println(scan.next()); // ラベル捨て
@@ -120,17 +123,17 @@ public class IrisGridGrouping {
 
         for (int i = 0; i < slmax; i++) {
             for (int j = 0; j < swmax; j++) {
-                prob_sep_seto[i][j] = s_setosa[i][j] / s_cnt;
-                prob_sep_vir[i][j] = s_virginica[i][j] / vi_cnt;
-                prob_sep_ver[i][j] = s_versicolor[i][j] / ve_cnt;
+                prob_sep_seto[i][j] = s_setosa[i][j] / (double)s_cnt;
+                prob_sep_vir[i][j] = s_virginica[i][j] / (double)vi_cnt;
+                prob_sep_ver[i][j] = s_versicolor[i][j] / (double)ve_cnt;
             }
         }
 
         for (int i = 0; i < plmax; i++) {
             for (int j = 0; j < pwmax; j++) {
-                prob_pet_seto[i][j] = p_setosa[i][j] / s_cnt;
-                prob_pet_vir[i][j] = p_virginica[i][j] / vi_cnt;
-                prob_pet_ver[i][j] = p_versicolor[i][j] / ve_cnt;
+                prob_pet_seto[i][j] = p_setosa[i][j] / (double)s_cnt;
+                prob_pet_vir[i][j] = p_virginica[i][j] / (double)vi_cnt;
+                prob_pet_ver[i][j] = p_versicolor[i][j] / (double)ve_cnt;
             }
         }
 
@@ -186,7 +189,7 @@ public class IrisGridGrouping {
             // ファイルを読み込んで、判定を出力しつづける
             // 合致していたかの判断も○×で出力
 
-            scan = new Scanner(new File("C:\\Users\\省吾\\Documents\\NetBeansProjects\\softcomputing\\src\\grid\\testdata"));
+            scan = new Scanner(new File(testdata));
             n = scan.nextInt();
             double cnt=0;
 
