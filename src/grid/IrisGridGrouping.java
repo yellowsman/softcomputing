@@ -30,8 +30,8 @@ public class IrisGridGrouping {
     int s_cnt, vi_cnt, ve_cnt;
     Scanner scan;
    
-    final String irisdata = "C:\\Users\\g15002se\\Documents\\NetBeansProjects\\softcomputing\\src\\grid\\iris.txt";
-    final String testdata = "C:\\Users\\g15002se\\Documents\\NetBeansProjects\\softcomputing\\src\\grid\\testdata";
+    final String irisdata = "iris.txt";
+    final String testdata = "testdata";
 
     public static void main(String[] args) throws IOException {
         IrisGridGrouping igg = new IrisGridGrouping();
