@@ -5,6 +5,7 @@
  */
 package grid;
 
+import com.panayotis.gnuplot.JavaPlot;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -15,34 +16,57 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * TODO: - データの分類 - データの学習(確率テーブルの再構築) - プロット(ファイルへの出力)
+ * TODO: データの分類 データの学習(確率テーブルの再構築、おそらく速度的に問題ない) JavaPlotを利用した描画
  *
  * @author Yellow
  *
  */
 public class IrisGridGrouping {
 
-    final String SEPARATOR = System.getProperty("line.separator");
+    final double BORDER_POINT = 0.5;
+
     int n;
-    int swmax, slmax, plmax, pwmax;
-    int[][] s_setosa, p_setosa, s_virginica, p_virginica, s_versicolor, p_versicolor;
-    double[][] prob_sep_seto, prob_pet_seto, prob_sep_vir, prob_pet_vir, prob_sep_ver, prob_pet_ver;
-    int s_cnt, vi_cnt, ve_cnt;
+    int maxSepWid, maxSepLen, maxPetLen, maxPetWid; // sepal,petalそれぞれの長さと幅の最大値
+    int sizeSepWid, sizeSepLen, sizePetLen, sizePetWid; // 配列の大きさ
+    int[][] cntSepSetosa, cntPetSetosa, cntSepVirginica, cntPetVirginica, cntSepVersicolor, cntPetVersicolor; //種類ごとのグリッドデータの件数を格納
+    double[][] probSepSetosa, probPetSetosa, probSepVirginica, probPetVirginica, probSepVersicolor, probPetVersicolor; // グリッドのマス目の確率を計算
+    int cntS, cntVi, cntVe; // 種類の個数
     Scanner scan;
-   
-    final String irisdata = "iris.txt";
-    final String testdata = "testdata";
+
+    final String IRIS_DATA = "iris.txt";
+    final String TEST_DATA = "testdata";
+    final String GNUPLOT_PATH = "C:\\Program Files\\gnuplot\\bin\\gnuplot.exe";
+
+    enum IrisNames {
+
+        setosa,
+        versicolor,
+        virginica
+    }
 
     public static void main(String[] args) throws IOException {
         IrisGridGrouping igg = new IrisGridGrouping();
         igg.controll();
     }
 
+    // レスポンスシステムにする
+    void controll() throws IOException {
+//        System.out.println("-----操作を選んでください-----");
+//        System.out.println("i {データファイルパス} = 確率表を構築");
+//        System.out.println("g [データファイルパス] = データを分類 確率表は更新されない");
+//        System.out.println("u [データファイルパス] = データを分類 確率表を更新");
+//        System.out.println("v = 分類の種類を一覧表示");
+        buildGrid();
+        grouping();
+        plot();
+
+    }
+
     // 初期化
     // 確率表の作成
     void buildGrid() throws IOException {
         //scan = new Scanner(System.in); //file
-        scan = new Scanner(new File(irisdata));
+        scan = new Scanner(new File(IRIS_DATA));
 
         for (int i = 0; i < 5; i++) {
             System.out.println(scan.next()); // ラベル捨て
@@ -50,10 +74,7 @@ public class IrisGridGrouping {
 
         // 件数
         n = scan.nextInt();
-        swmax = 0;
-        slmax = 0;
-        plmax = 0;
-        pwmax = 0;
+        maxSepWid = maxSepLen = maxPetLen = maxPetWid = 0;
 
         // 150件
         Iris[] irises = new Iris[n];
@@ -66,74 +87,73 @@ public class IrisGridGrouping {
             double pw = scan.nextDouble();
             String cate = scan.next();
 
-            slmax = Math.max((int) Math.ceil(sl), slmax);
-            swmax = Math.max((int) Math.ceil(sw), swmax);
-            plmax = Math.max((int) Math.ceil(pl), plmax);
-            pwmax = Math.max((int) Math.ceil(pw), pwmax);
+            maxSepLen = Math.max((int) Math.ceil(sl), maxSepLen);
+            maxSepWid = Math.max((int) Math.ceil(sw), maxSepWid);
+            maxPetLen = Math.max((int) Math.ceil(pl), maxPetLen);
+            maxPetWid = Math.max((int) Math.ceil(pw), maxPetWid);
 
             irises[i] = new Iris(sl, sw, pl, pw, cate);
         }
 
-        // 間隔を0.5ずつにする　よって、最大値の2倍の範囲を取る2倍
-        // 入ってきた値も2倍し、四捨五入して配列に格納する
-        slmax = slmax * 2 + 1;
-        swmax = swmax * 2 + 1;
-        plmax = plmax * 2 + 1;
-        pwmax = pwmax * 2 + 1;
+        // グリッドの間隔、マス目を決定
+        sizeSepLen = (int) (maxSepLen / BORDER_POINT) + 1;
+        sizeSepWid = (int) (maxSepWid / BORDER_POINT) + 1;
+        sizePetLen = (int) (maxPetLen / BORDER_POINT) + 1;
+        sizePetWid = (int) (maxPetWid / BORDER_POINT) + 1;
 
-        // マッピングテーブル
-        // 直接確率を記入した方が早いかも？
-        // それとも、後で確率を計算する時のためのリソースとして扱う？
-        s_setosa = new int[slmax][swmax];
-        s_versicolor = new int[slmax][swmax];
-        s_virginica = new int[slmax][swmax];
+        // カウントテーブル
+        cntSepSetosa = new int[sizeSepLen][sizeSepWid];
+        cntSepVersicolor = new int[sizeSepLen][sizeSepWid];
+        cntSepVirginica = new int[sizeSepLen][sizeSepWid];
+        cntPetSetosa = new int[sizePetLen][sizePetWid];
+        cntPetVersicolor = new int[sizePetLen][sizePetWid];
+        cntPetVirginica = new int[sizePetLen][sizePetWid];
 
-        p_setosa = new int[plmax][pwmax];
-        p_versicolor = new int[plmax][pwmax];
-        p_virginica = new int[plmax][pwmax];
+        // 確率テーブル
+        probSepSetosa = new double[sizeSepLen][sizeSepWid];
+        probSepVersicolor = new double[sizeSepLen][sizeSepWid];
+        probSepVirginica = new double[sizeSepLen][sizeSepWid];
+        probPetSetosa = new double[sizePetLen][sizePetWid];
+        probPetVersicolor = new double[sizePetLen][sizePetWid];
+        probPetVirginica = new double[sizePetLen][sizePetWid];
 
-        s_cnt = 0;
-        ve_cnt = 0;
-        vi_cnt = 0;
 
+        cntS = cntVe = cntVi = 0;
+        
+
+        // カウントテーブルへ値を設定
         for (Iris i : irises) {
-            if (i.getCategory().equals("setosa")) {
-                s_setosa = incrementGridSepal(i, s_setosa);
-                p_setosa = incrementGridPetal(i, p_setosa);
-                s_cnt++;
+            if (i.getCategory().equals(IrisNames.setosa.toString())) {
+                cntSepSetosa = incrementGridSepal(i, cntSepSetosa);
+                cntPetSetosa = incrementGridPetal(i, cntPetSetosa);
+                cntS++;
 
-            } else if (i.getCategory().equals("versicolor")) {
-                s_versicolor = incrementGridSepal(i, s_versicolor);
-                p_versicolor = incrementGridPetal(i, p_versicolor);
-                ve_cnt++;
+            } else if (i.getCategory().equals(IrisNames.versicolor.toString())) {
+                cntSepVersicolor = incrementGridSepal(i, cntSepVersicolor);
+                cntPetVersicolor = incrementGridPetal(i, cntPetVersicolor);
+                cntVe++;
             } else {
                 // virginica
-                s_virginica = incrementGridSepal(i, s_virginica);
-                p_virginica = incrementGridPetal(i, p_virginica);
-                vi_cnt++;
+                cntSepVirginica = incrementGridSepal(i, cntSepVirginica);
+                cntPetVirginica = incrementGridPetal(i, cntPetVirginica);
+                cntVi++;
             }
         }
 
-        prob_sep_seto = new double[slmax][swmax];
-        prob_pet_seto = new double[plmax][pwmax];
-        prob_sep_vir = new double[slmax][swmax];
-        prob_pet_vir = new double[plmax][pwmax];
-        prob_sep_ver = new double[slmax][swmax];
-        prob_pet_ver = new double[plmax][pwmax];
-
-        for (int i = 0; i < slmax; i++) {
-            for (int j = 0; j < swmax; j++) {
-                prob_sep_seto[i][j] = s_setosa[i][j] / (double)s_cnt;
-                prob_sep_vir[i][j] = s_virginica[i][j] / (double)vi_cnt;
-                prob_sep_ver[i][j] = s_versicolor[i][j] / (double)ve_cnt;
+        // 確率計算
+        for (int i = 0; i < sizeSepLen; i++) {
+            for (int j = 0; j < sizeSepWid; j++) {
+                probSepSetosa[i][j] = cntSepSetosa[i][j] / (double) cntS;
+                probSepVirginica[i][j] = cntSepVirginica[i][j] / (double) cntVi;
+                probSepVersicolor[i][j] = cntSepVersicolor[i][j] / (double) cntVe;
             }
         }
 
-        for (int i = 0; i < plmax; i++) {
-            for (int j = 0; j < pwmax; j++) {
-                prob_pet_seto[i][j] = p_setosa[i][j] / (double)s_cnt;
-                prob_pet_vir[i][j] = p_virginica[i][j] / (double)vi_cnt;
-                prob_pet_ver[i][j] = p_versicolor[i][j] / (double)ve_cnt;
+        for (int i = 0; i < sizePetLen; i++) {
+            for (int j = 0; j < sizePetWid; j++) {
+                probPetSetosa[i][j] = cntPetSetosa[i][j] / (double) cntS;
+                probPetVirginica[i][j] = cntPetVirginica[i][j] / (double) cntVi;
+                probPetVersicolor[i][j] = cntPetVersicolor[i][j] / (double) cntVe;
             }
         }
 
@@ -141,45 +161,13 @@ public class IrisGridGrouping {
 
     void plot() {
         // データの出力
-        // 1プロット表につき、1つのファイルを出力する
-        // 新しい教師データが入ってきたら、確率計算をやり直す
-        // 
-        // 出力ファイルフォーマット
-        // n 個数
-        // inc_x,inc_y x軸とy軸の値の増え方,区間
-        // x区間の開始値,y区間の開始値,確率値
-        //
-        // 例)
-        // 20 -> データの個数が20行
-        // 5,3 -> xの区間幅は5,yの区間幅は3
-        // 12,24,0.8 -> x区間は12~17,y区間は24~27,区間確率は0.8
-        String setoSepal = "setosa_Sepal.txt";
-        String setoPetal = "setosa_Petal.txt";
-        String verSepal = "versicolor_Sepal.txt";
-        String verPetal = "versicolor_Petal.txt";
-        String virSepal = "virginica_Sepal.txt";
-        String virPetal = "virginica_Petal.txt";
+        // 与えられたデータをgnuplotで表示
 
-        FileWriter fw = null;
-        try {
-            fw = new FileWriter(new File(setoSepal));
-
-            fwriter(fw, 50, 0.5, 0.5, s_cnt, s_setosa);
-            fw = new FileWriter(new File(setoPetal));
-            fwriter(fw, 50, 0.5, 0.5, s_cnt, p_setosa);
-
-            fw = new FileWriter(new File(verSepal));
-            fwriter(fw, 50, 0.5, 0.5, ve_cnt, s_versicolor);
-            fw = new FileWriter(new File(verPetal));
-            fwriter(fw, 50, 0.5, 0.5, ve_cnt, p_versicolor);
-
-            fw = new FileWriter(new File(virSepal));
-            fwriter(fw, 50, 0.5, 0.5, vi_cnt, s_virginica);
-            fw = new FileWriter(new File(virPetal));
-            fwriter(fw, 50, 0.5, 0.5, vi_cnt, p_virginica);
-        } catch (IOException ex) {
-            Logger.getLogger(IrisGridGrouping.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        JavaPlot plot = new JavaPlot(GNUPLOT_PATH); // gnuplotのパスを書く
+        plot.addPlot(cntPetSetosa);
+        plot.addPlot(cntPetVersicolor);
+        plot.addPlot(cntPetVirginica);
+        plot.plot();
 
     }
 
@@ -188,10 +176,9 @@ public class IrisGridGrouping {
         try {
             // ファイルを読み込んで、判定を出力しつづける
             // 合致していたかの判断も○×で出力
-
-            scan = new Scanner(new File(testdata));
+            scan = new Scanner(new File(TEST_DATA));
             n = scan.nextInt();
-            double cnt=0;
+            double cnt = 0;
 
             for (int i = 0; i < n; i++) {
                 scan.nextInt(); //番号捨て
@@ -206,13 +193,13 @@ public class IrisGridGrouping {
                 if (cate.equals(dec)) {
                     System.out.println(" o");
                     cnt++;
-                }else{
+                } else {
                     System.out.println(" x");
                 }
 
             }
-            
-            System.out.println("正答率:"+(cnt/n));
+
+            System.out.println("正答率:" + (cnt / n));
 
         } catch (FileNotFoundException ex) {
             Logger.getLogger(IrisGridGrouping.class.getName()).log(Level.SEVERE, null, ex);
@@ -221,60 +208,66 @@ public class IrisGridGrouping {
 
     // 入力データから、どの種類なのかを返す
     String decision(Iris iris) {
-        int sl2r = (int) (Math.round(iris.getSepal_len()) * 2);
-        int sw2r = (int) (Math.round(iris.getSepal_wid()) * 2);
-        int pl2r = (int) (Math.round(iris.getPetal_len()) * 2);
-        int pw2r = (int) (Math.round(iris.getPetal_wid()) * 2);
+        int slbr = (int) (Math.round(iris.getSepalLen()) / BORDER_POINT);
+        int swbr = (int) (Math.round(iris.getSepalWid()) / BORDER_POINT);
+        int plbr = (int) (Math.round(iris.getPetalLen()) / BORDER_POINT);
+        int pwbr = (int) (Math.round(iris.getPetalWid()) / BORDER_POINT);
 
         double sep, pet;
-        String scate, pcate;
+        String scate, pcate; // sepalとpetalでの判断を格納
 
-        if (prob_sep_ver[sl2r][sw2r] < prob_sep_vir[sl2r][sw2r]) {
-            if (prob_sep_seto[sl2r][sw2r] < prob_sep_vir[sl2r][sw2r]) {
+        // sepal
+        if (probSepVersicolor[slbr][swbr] < probSepVirginica[slbr][swbr]) {
+            if (probSepSetosa[slbr][swbr] < probSepVirginica[slbr][swbr]) {
                 // virが一番
-                sep = prob_sep_vir[sl2r][sw2r];
-                scate = "virginica";
+                sep = probSepVirginica[slbr][swbr];
+                scate = IrisNames.virginica.toString();
             } else {
                 // setoが一番
-                sep = prob_sep_seto[sl2r][sw2r];
-                scate = "setosa";
+                sep = probSepSetosa[slbr][swbr];
+                scate = IrisNames.setosa.toString();
             }
         } else {
-            if (prob_sep_seto[sl2r][sw2r] < prob_sep_ver[sl2r][sw2r]) {
+            if (probSepSetosa[slbr][swbr] < probSepVersicolor[slbr][swbr]) {
                 // verが一番
-                sep = prob_sep_ver[sl2r][sw2r];
-                scate = "versicolor";
+                sep = probSepVersicolor[slbr][swbr];
+                scate = IrisNames.versicolor.toString();
             } else {
                 // setoが一番
-                sep = prob_sep_seto[sl2r][sw2r];
-                scate = "setosa";
+                sep = probSepSetosa[slbr][swbr];
+                scate = IrisNames.setosa.toString();
             }
 
         }
 
-        if (prob_pet_ver[pl2r][pw2r] < prob_pet_vir[pl2r][pw2r]) {
-            if (prob_pet_seto[pl2r][pw2r] < prob_pet_vir[pl2r][pw2r]) {
+        // petal
+        if (probPetVersicolor[plbr][pwbr] < probPetVirginica[plbr][pwbr]) {
+            if (probPetSetosa[plbr][pwbr] < probPetVirginica[plbr][pwbr]) {
                 // virが一番
-                pet = prob_pet_vir[pl2r][pw2r];
-                pcate = "virginica";
+                pet = probPetVirginica[plbr][pwbr];
+                pcate = IrisNames.virginica.toString();
             } else {
                 // setoが一番
-                pet = prob_pet_seto[pl2r][pw2r];
-                pcate = "setosa";
+                pet = probPetSetosa[plbr][pwbr];
+                pcate = IrisNames.setosa.toString();
             }
         } else {
-            if (prob_pet_seto[pl2r][pw2r] < prob_pet_ver[pl2r][pw2r]) {
+            if (probPetSetosa[plbr][pwbr] < probPetVersicolor[plbr][pwbr]) {
                 // verが一番
-                pet = prob_pet_ver[pl2r][pw2r];
-                pcate = "versicolor";
+                pet = probPetVersicolor[plbr][pwbr];
+                pcate = IrisNames.versicolor.toString();
             } else {
                 // setoが一番
-                pet = prob_pet_seto[pl2r][pw2r];
-                pcate = "setosa";
+                pet = probPetSetosa[plbr][pwbr];
+                pcate = IrisNames.setosa.toString();
             }
 
         }
+        
+        
 
+
+        // sepalとpetalで確率が高い方を採用
         if (sep > pet) {
             return scate;
         } else {
@@ -283,98 +276,61 @@ public class IrisGridGrouping {
 
     }
 
-    // レスポンスシステムにする
-    void controll() throws IOException {
-//        System.out.println("-----操作を選んでください-----");
-//        System.out.println("i {データファイルパス} = 確率表を構築");
-//        System.out.println("g [データファイルパス] = データを分類 確率表は更新されない");
-//        System.out.println("u [データファイルパス] = データを分類 確率表を更新");
-//        System.out.println("v = 分類の種類を一覧表示");
-        buildGrid();
-        grouping();
-
-    }
-
+    // グリッドへ個数を追加
     int[][] incrementGridSepal(Iris i, int[][] grid) {
-        int sl2r = (int) Math.round(i.getSepal_len() * 2);
-        int sw2r = (int) Math.round(i.getSepal_wid() * 2);
+        int slbr = (int) Math.round(i.getSepalLen() / BORDER_POINT);
+        int swbr = (int) Math.round(i.getSepalWid() / BORDER_POINT);
 
         // 指定のグリッドへ個数を追加
-        grid[sl2r][sw2r]++;
-        //System.out.println(Arrays.deepToString(grid));
+        grid[slbr][swbr]++;
         return grid;
     }
 
     int[][] incrementGridPetal(Iris i, int[][] grid) {
-        int pl2r = (int) (Math.round(i.getPetal_len()) * 2);
-        int pw2r = (int) (Math.round(i.getPetal_wid()) * 2);
+        int plbr = (int) (Math.round(i.getPetalLen()) / BORDER_POINT);
+        int pwbr = (int) (Math.round(i.getPetalWid()) / BORDER_POINT);
 
         // 指定のグリッドへ個数を追加
-        grid[pl2r][pw2r]++;
+        grid[plbr][pwbr]++;
         return grid;
     }
 
-    void fwriter(FileWriter w, int n, double x_inc, double y_inc, int cnt, int[][] grid) {
-        try {
-            w.write(n);
-            w.write(SEPARATOR);
-            w.write(x_inc + "," + y_inc);
-
-            for (int i = 0; i < grid.length; i++) {
-                for (int j = 0; j < grid[i].length; j++) {
-                    if (grid[i][j] != 0) {
-                        fwriteLine(w, i, j, grid[i][j] / cnt);
-                    }
-                }
-            }
-
-        } catch (IOException ex) {
-            Logger.getLogger(IrisGridGrouping.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-    }
-
-    void fwriteLine(FileWriter w, int xs, int ys, double prob) throws IOException {
-        String c = ",";
-        w.write(xs + c + ys + c + prob);
-        w.write(SEPARATOR);
-    }
 }
 
 class Iris {
 
     private String category;
-    private double sepal_len;
-    private double sepal_wid;
-    private double Petal_len;
-    private double Petal_wid;
+    private double sepalLen;
+    private double sepalWid;
+    private double PetalLen;
+    private double PetalWid;
 
     public Iris(double sl, double sw, double pl, double pw, String category) {
         this.category = category;
-        this.sepal_len = sl;
-        this.sepal_wid = sw;
-        this.Petal_len = pl;
-        this.Petal_wid = pw;
+        this.sepalLen = sl;
+        this.sepalWid = sw;
+        this.PetalLen = pl;
+        this.PetalWid = pw;
     }
 
     public String getCategory() {
         return category;
     }
 
-    public double getSepal_len() {
-        return sepal_len;
+    public double getSepalLen() {
+        return sepalLen;
     }
 
-    public double getSepal_wid() {
-        return sepal_wid;
+    public double getSepalWid() {
+        return sepalWid;
     }
 
-    public double getPetal_len() {
-        return Petal_len;
+    public double getPetalLen() {
+        return PetalLen;
     }
 
-    public double getPetal_wid() {
-        return Petal_wid;
+    public double getPetalWid() {
+        return PetalWid;
     }
 
 }
