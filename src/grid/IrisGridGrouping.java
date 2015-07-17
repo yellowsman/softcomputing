@@ -5,6 +5,8 @@
  */
 package grid;
 
+
+import Models.Iris;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -38,7 +40,6 @@ public class IrisGridGrouping {
     final String GNUPLOT_PATH = "C:\\Program Files\\gnuplot\\bin\\gnuplot.exe";
 
     enum IrisNames {
-
         setosa,
         versicolor,
         virginica
@@ -269,7 +270,6 @@ public class IrisGridGrouping {
                 sep = probSepSetosa[slbr][swbr];
                 scate = IrisNames.setosa.toString();
             }
-
         }
 
         // petal
@@ -326,43 +326,7 @@ public class IrisGridGrouping {
 
 }
 
-class Iris {
 
-    private String category;
-    private double sepalLen;
-    private double sepalWid;
-    private double PetalLen;
-    private double PetalWid;
-
-    public Iris(double sl, double sw, double pl, double pw, String category) {
-        this.category = category;
-        this.sepalLen = sl;
-        this.sepalWid = sw;
-        this.PetalLen = pl;
-        this.PetalWid = pw;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public double getSepalLen() {
-        return sepalLen;
-    }
-
-    public double getSepalWid() {
-        return sepalWid;
-    }
-
-    public double getPetalLen() {
-        return PetalLen;
-    }
-
-    public double getPetalWid() {
-        return PetalWid;
-    }
-
-}
 
 class IrisPlot extends Number {
 
