@@ -5,10 +5,8 @@
  */
 package grid;
 
-import com.panayotis.gnuplot.JavaPlot;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -16,14 +14,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * TODO: データの分類 データの学習(確率テーブルの再構築、おそらく速度的に問題ない) JavaPlotを利用した描画
+ * TODO: データの分類 データの学習(確率テーブルの再構築、おそらく速度的に問題ない) JavaPlotを利用した描画 -> 縦横の単位が違う
+ * 現状は個数が横になっているので、それぞれ長さと幅になるよう修正すべき DataSetクラスや、PlotStyleクラス
+ *
  *
  * @author Yellow
  *
  */
 public class IrisGridGrouping {
 
-    final double BORDER_POINT = 0.5;
+    final double BORDER_POINT = 0.5; // 0.1~1まで
 
     int n;
     int maxSepWid, maxSepLen, maxPetLen, maxPetWid; // sepal,petalそれぞれの長さと幅の最大値
@@ -58,8 +58,9 @@ public class IrisGridGrouping {
 //        System.out.println("v = 分類の種類を一覧表示");
         buildGrid();
         grouping();
-        plot();
+        //plot();
 
+        view();
     }
 
     // 初期化
@@ -117,9 +118,7 @@ public class IrisGridGrouping {
         probPetVersicolor = new double[sizePetLen][sizePetWid];
         probPetVirginica = new double[sizePetLen][sizePetWid];
 
-
         cntS = cntVe = cntVi = 0;
-        
 
         // カウントテーブルへ値を設定
         for (Iris i : irises) {
@@ -163,11 +162,44 @@ public class IrisGridGrouping {
         // データの出力
         // 与えられたデータをgnuplotで表示
 
-        JavaPlot plot = new JavaPlot(GNUPLOT_PATH); // gnuplotのパスを書く
-        plot.addPlot(cntPetSetosa);
-        plot.addPlot(cntPetVersicolor);
-        plot.addPlot(cntPetVirginica);
-        plot.plot();
+    }
+
+    void plotArray(int[][] array, String name) {
+        System.out.println(name);
+
+        for (int[] a : array) {
+            System.out.println(Arrays.toString(a));
+        }
+    }
+
+    void plotArray(double[][] array, String name) {
+        System.out.println(name);
+
+        for (double[] a : array) {
+            System.out.println(Arrays.toString(a));
+        }
+    }
+
+    void view() {
+        System.out.println("------COUNT--------");
+        System.out.println("-----Petal---------");
+        plotArray(cntPetSetosa, "setosa");
+        plotArray(cntPetVersicolor, "versicolor");
+        plotArray(cntPetVirginica, "virginica");
+        System.out.println("-------Sepal---------");
+        plotArray(cntSepSetosa, "setosa");
+        plotArray(cntSepVersicolor, "versicolor");
+        plotArray(cntSepVirginica, "virginica");
+        System.out.println();
+        System.out.println("------PROB--------");
+        System.out.println("------Petal--------");
+        plotArray(probPetSetosa, "setosa");
+        plotArray(probPetVersicolor, "versicolor");
+        plotArray(probPetVirginica, "virginica");
+        System.out.println("-------Sepal---------");
+        plotArray(probSepSetosa, "setosa");
+        plotArray(probSepVersicolor, "versicolor");
+        plotArray(probSepVirginica, "virginica");
 
     }
 
@@ -263,9 +295,6 @@ public class IrisGridGrouping {
             }
 
         }
-        
-        
-
 
         // sepalとpetalで確率が高い方を採用
         if (sep > pet) {
@@ -331,6 +360,30 @@ class Iris {
 
     public double getPetalWid() {
         return PetalWid;
+    }
+
+}
+
+class IrisPlot extends Number {
+
+    @Override
+    public int intValue() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public long longValue() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public float floatValue() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public double doubleValue() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
