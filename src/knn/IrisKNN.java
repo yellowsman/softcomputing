@@ -146,7 +146,8 @@ public class IrisKNN {
         
         Iris[] arr = new Iris[k];
         for(int c=0;c<k;c++){
-            // 比較
+            // 比較して近い順に並べる
+	    
         }
         
         return arr;
@@ -160,4 +161,18 @@ public class IrisKNN {
         
         return Math.sqrt(Math.pow(pl, 2)+Math.pow(pw, 2)+Math.pow(sl, 2)+Math.pow(sw, 2));
     }
+	    
+}
+
+class IrisDistComp implements Comparable<IrisDist>{
+
+	@Override
+	public int compareTo(IrisDist o) {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+	
+}
+
+class IrisDist{
+	
 }
